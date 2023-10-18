@@ -1,17 +1,12 @@
-import express, { Express, Request, Response } from 'express';
-import dotenv from 'dotenv';
+import { app } from './server';
+import { importJson } from './data/addresses';
 
-dotenv.config();
+const port = 3000;
 
-const app: Express = express();
-const port = process.env.PORT;
+// Initialize dataset
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Gan Basic setup');
+importJson().then(() => {
+  app.listen(port, () => {
+    console.log(`Server is running at http://localhost:${port}`);
+  });
 });
-
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
-});
-
-export{app};

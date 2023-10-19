@@ -17,5 +17,7 @@ const cities = new Cities();
 app.get('/cities-by-tag', cities.getCitiesByTag);
 app.get('/distance', cities.getDistance);
 app.get('/area', cities.getArea);
+app.get('/area-result/:guid', cities.getAreaResult);
+app.get('/all-cities', cities.getAllCities);
 
 export{ app };

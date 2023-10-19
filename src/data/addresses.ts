@@ -4,6 +4,7 @@ import Chain from 'stream-chain';
 import fs from 'fs';
 
 import { IAddress } from '../interfaces/address';
+export var addresses : IAddress[] = [];
 
 export const importJson = async () => {
     console.log("Initializing app, loading data in");
@@ -18,5 +19,3 @@ export const importJson = async () => {
     }
     console.log("All address data loaded");
 }
-
-export var addresses : IAddress[] = [];

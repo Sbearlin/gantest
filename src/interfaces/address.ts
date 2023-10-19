@@ -10,3 +10,9 @@ export interface IAddress {
     longitude: number;
     tags: string[]
 }
+
+export interface IAreaReport {
+    guid: string;
+    cities?: IAddress[];
+    processing: boolean;
+}

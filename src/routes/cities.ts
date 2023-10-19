@@ -1,9 +1,20 @@
 import { Request, Response } from "express";
 
 import { addresses } from "../data/addresses";
-import { IAddressRequestQuery } from "../interfaces/requests";
-import { IAddress } from "../interfaces/address";
-import { IDistanceResponse } from "../interfaces/responses";
+import {
+  IAddressRequestQuery,
+  IAreaReportParams,
+} from "../interfaces/requests";
+import { IAddress, IAreaReport } from "../interfaces/address";
+import {
+  IAreaReportGenerationResponse,
+  IDistanceResponse,
+} from "../interfaces/responses";
+import {
+  areaReports,
+  calculateDistance,
+  generateAreaReport,
+} from "../data/areaAddressProcessing";
 
 export default class Cities {
   public getCitiesByTag = (
@@ -50,7 +61,7 @@ export default class Cities {
       return;
     }
 
-    const distance: number = this.calculateDistance(fromAddress, toAddress);
+    const distance: number = calculateDistance(fromAddress, toAddress);
 
     const distanceResponse: IDistanceResponse = {
       from: fromAddress,
@@ -83,52 +94,55 @@ export default class Cities {
       return;
     }
 
-    const addressesInArea: IAddress[] = [];
-    // I'm not sure if there's a better way to approach this problem, as this is very ineffecient the bigger the dataset gets
-    // A possible solution would be to make a box of distance x distance with resulting Lat + Long values. From that dataset, we could do the below calculation
-    addresses.forEach((address) => {
-      // Exclude from address
-      if (address.guid != from) {
-        const distance: number = this.calculateDistance(fromAddress, address);
-        if(distance < 250){
-            addressesInArea.push(address);
-        }
-      }
-    });
+    const reportGuid: string = "2152f96f-50c7-4d76-9e18-f7033bd14428"; // This is hardcoded for the challenge, should be generated with a UUID generator
+    const areaReport: IAreaReport = {
+      guid: reportGuid,
+      processing: true,
+    };
+    generateAreaReport(fromAddress, distance, areaReport); // generateAreaReport is a async function, and we will not wait for it to complete
 
-    res.send(addressesInArea);
+    const responseBody: IAreaReportGenerationResponse = {
+      resultsUrl: `http://172.0.0.1:8080/area-result/${reportGuid}`, // This is hardcoded, but the domain could be controlled by i.e. an env variable
+    };
+    res.send(responseBody);
   };
 
-  public getAreaResult = (
-    req: Request<{}, {}, {}, IAddressRequestQuery>,
-    res: Response
-  ) => {
-    
-  }
+  public getAreaResult = (req: Request<IAreaReportParams>, res: Response) => {
+    const { guid } = req.params;
+    console.log("Guid", guid);
+    if (!guid) {
+      res.status(400).send("Missing url params. Required params are guid");
+      return;
+    }
 
-  // Completely stolen from https://stackoverflow.com/a/18883819. I'm not the biggest math expert with radius calculations. Another solution would be to use the haversine-distance library.
-  // Criteria for import:
-  // Is the radian consistent with the rounding of the assignment
-  // Is the function returning reasonable results by supplying a subset of test data
-  private calculateDistance(from: IAddress, to: IAddress): number {
-    const R: number = 6371; // km
-    const dLat: number = this.toRad(to.latitude - from.latitude);
-    const dLon: number = this.toRad(to.longitude - from.longitude);
-    const lat1: number = this.toRad(from.latitude);
-    const lat2: number = this.toRad(to.latitude);
+    const report = areaReports.find((ar) => ar.guid == guid);
+    console.log("Report found", report);
+    if (!report) {
+      res.status(400).send("No report with that guid");
+      return;
+    }
 
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c;
-    // We do *100 and /100 to create 2 decimal places
-    // Other solution would be to use toFixed(2). However this returns a string. It can be cast as a number, but really doesn't make sence
-    const distanceRounded = Math.round(distance * 100) / 100;
-    return distanceRounded;
-  }
+    // If processing is still true, we answer back 202. Supplying the report object to give transpearency of the process for API consumers
+    if (report.processing) {
+      res.status(202).send(report);
+      return;
+    }
 
-  private toRad(value: number): number {
-    return (value * Math.PI) / 180;
-  }
+    res.send(report);
+  };
+
+  public getAllCities = (req: Request, res: Response) => {
+    if(!addresses || addresses.length == 0){
+      res.status(500).send("No address data available");
+      return;
+    }
+    // Adding array start marker
+    res.write('[');
+    addresses.forEach(address => {
+      res.write(`${JSON.stringify(address)},`); // Adding , in the end for separation of objects
+    });
+    // Adding array end marker
+    res.write(']');
+    res.end();
+  };
 }

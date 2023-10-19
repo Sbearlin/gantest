@@ -6,3 +6,7 @@ export interface IDistanceResponse {
     unit: string;
     distance: number;
 }
+
+export interface IAreaReportGenerationResponse {
+    resultsUrl: string;
+}

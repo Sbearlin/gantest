@@ -1,7 +1,7 @@
 import { app } from './server';
 import { importJson } from './data/addresses';
 
-const port = 3000;
+const port = 8080;
 
 // Initialize dataset
 

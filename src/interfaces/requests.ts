@@ -5,3 +5,7 @@ export interface IAddressRequestQuery {
     to: string;
     distance: number
 }
+
+export interface IAreaReportParams {
+    guid: string;
+}

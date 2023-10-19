@@ -8,6 +8,7 @@ import {
 import { IAddress, IAreaReport } from "../interfaces/address";
 import {
   IAreaReportGenerationResponse,
+  ICitiesByTagResponse,
   IDistanceResponse,
 } from "../interfaces/responses";
 import {
@@ -38,7 +39,11 @@ export default class Cities {
       (a) => a.isActive == true && a.tags.indexOf(tag) > 0
     );
 
-    res.send(filteredAdresses);
+    const response : ICitiesByTagResponse = {
+      cities: filteredAdresses
+    };
+
+    res.send(response);
   };
 
   public getDistance = (
@@ -102,9 +107,9 @@ export default class Cities {
     generateAreaReport(fromAddress, distance, areaReport); // generateAreaReport is a async function, and we will not wait for it to complete
 
     const responseBody: IAreaReportGenerationResponse = {
-      resultsUrl: `http://172.0.0.1:8080/area-result/${reportGuid}`, // This is hardcoded, but the domain could be controlled by i.e. an env variable
+      resultsUrl: `http://127.0.0.1:8080/area-result/${reportGuid}`, // This is hardcoded, but the domain could be controlled by i.e. an env variable
     };
-    res.send(responseBody);
+    res.status(202).send(responseBody);
   };
 
   public getAreaResult = (req: Request<IAreaReportParams>, res: Response) => {
@@ -138,8 +143,13 @@ export default class Cities {
     }
     // Adding array start marker
     res.write('[');
-    addresses.forEach(address => {
-      res.write(`${JSON.stringify(address)},`); // Adding , in the end for separation of objects
+    const addressesLength = addresses.length;
+    addresses.forEach((address, index) => {
+      let streamString = JSON.stringify(address);
+      if(index != addressesLength){
+        streamString += ','; // Adding , in the end for separation of objects for all objects except for the last one
+      }
+      res.write(streamString); 
     });
     // Adding array end marker
     res.write(']');

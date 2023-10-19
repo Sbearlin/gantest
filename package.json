@@ -6,6 +6,7 @@
   "scripts": {
     "test": "jest",
     "build": "npx tsc",
+    "build-docker": "docker build -t gan-test -f Dockerfile .",
     "start": "node dist/app.js",
     "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/app.js\""
   },

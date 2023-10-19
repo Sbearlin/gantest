@@ -1,5 +1,9 @@
 import { IAddress } from "./address";
 
+export interface ICitiesByTagResponse {
+    cities: IAddress[];
+}
+
 export interface IDistanceResponse {
     from: IAddress;
     to: IAddress;
